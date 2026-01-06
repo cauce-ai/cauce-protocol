@@ -3,6 +3,7 @@
 **Version:** 1.0.0-draft
 **Status:** Draft
 **Date:** 2026-01-06
+**License:** [Apache 2.0](./LICENSE)
 
 ---
 
@@ -2199,6 +2200,14 @@ The following features are planned for future versions:
 ---
 
 ## Changelog
+
+### v1.0.0-draft (2026-01-06)
+
+- Added schema discovery methods (`cauce.schemas.list`, `cauce.schemas.get`)
+- Added MCP schemas resource (`cauce://schemas`)
+- Added A2A schema discovery skills (`get_schemas`, `get_schema`)
+- Clarified payload schemas are Hub-defined, not protocol-defined
+- Added Apache 2.0 license
 
 ### v1.0.0-draft (2026-01-05)
 

@@ -97,8 +97,9 @@ schemas/
 │   ├── unsubscribe.schema.json
 │   ├── publish.schema.json     # Publishing messages
 │   ├── ack.schema.json         # Acknowledgments
-│   └── subscription.schema.json # Subscription lifecycle
-└── payloads/
+│   ├── subscription.schema.json # Subscription lifecycle
+│   └── schemas.schema.json     # Schema discovery
+└── payloads/                   # Example payloads (Hub-defined, not normative)
     ├── email.schema.json       # Email-specific payloads
     ├── sms.schema.json         # SMS/MMS payloads
     ├── slack.schema.json       # Slack payloads
@@ -125,7 +126,7 @@ schemas/
 
 ## License
 
-[MIT](./LICENSE)
+[Apache 2.0](./LICENSE)
 
 ## Contributing
 
