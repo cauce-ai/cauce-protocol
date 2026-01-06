@@ -1,23 +1,26 @@
 # Cauce Protocol
 
-Open protocol enabling AI agents to intelligently manage all your communications in one place.
+Open protocol enabling AI agents to intelligently manage all your
+communications in one place.
 
 ## Overview
 
-Cauce is a unified protocol for personal communication arbitrage. It provides a standardized way to:
+Cauce is a unified protocol for personal communication arbitrage. It
+provides a standardized way to:
 
 - **Receive signals** from diverse sources (email, SMS, Slack, voice, etc.)
 - **Route intelligently** through a pub/sub hub architecture
-- **Enable AI agents** to prioritize, filter, summarize, and respond to communications
+- **Enable AI agents** to prioritize, filter, summarize, and respond
 - **Interoperate** with the broader AI ecosystem via A2A protocol support
 
-Think of it as a **universal inbox protocol** - your AI agent subscribes to all your communication channels through one interface.
+Think of it as a **universal inbox protocol** - your AI agent subscribes to
+all your communication channels through one interface.
 
 ## Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                       CAUCE ECOSYSTEM                         │
+│                       CAUCE ECOSYSTEM                           │
 │                                                                 │
 │  [Email] → [Adapter] ──┐                                        │
 │  [SMS]   → [Adapter] ──┼──→ [Hub] ←──→ [Your AI Agent]          │
@@ -29,11 +32,11 @@ Think of it as a **universal inbox protocol** - your AI agent subscribes to all 
 
 **Components:**
 
-| Component | Role |
-|-----------|------|
-| **Adapter** | Connects to a communication source, publishes signals to Hub |
-| **Hub** | Pub/sub message broker that routes signals and actions |
-| **Agent** | Subscribes to signals, decides what to do (your implementation) |
+| Component   | Role                                                 |
+|-------------|------------------------------------------------------|
+| **Adapter** | Connects to a communication source, publishes to Hub |
+| **Hub**     | Pub/sub message broker that routes signals/actions   |
+| **Agent**   | Subscribes to signals, decides what to do            |
 
 ## Key Features
 
@@ -99,7 +102,7 @@ schemas/
 │   ├── ack.schema.json         # Acknowledgments
 │   ├── subscription.schema.json # Subscription lifecycle
 │   └── schemas.schema.json     # Schema discovery
-└── payloads/                   # Example payloads (Hub-defined, not normative)
+└── payloads/                   # Examples (Hub-defined, not normative)
     ├── email.schema.json       # Email-specific payloads
     ├── sms.schema.json         # SMS/MMS payloads
     ├── slack.schema.json       # Slack payloads
@@ -108,18 +111,18 @@ schemas/
 
 ## Roadmap
 
-| Phase | Deliverable | Status |
-|-------|-------------|--------|
-| 1 | Protocol Specification | Draft |
-| 2 | JSON Schemas | Done |
-| 3 | Rust SDK | Planned |
-| 4 | Python/TypeScript Bindings | Planned |
-| 5 | Reference Implementations | Planned |
+| Phase | Deliverable                  | Status  |
+|-------|------------------------------|---------|
+| 1     | Protocol Specification       | Draft   |
+| 2     | JSON Schemas                 | Done    |
+| 3     | Rust SDK                     | Planned |
+| 4     | Python/TypeScript Bindings   | Planned |
+| 5     | Reference Implementations    | Planned |
 
 ## Design Principles
 
 1. **Hub is thin** - Pure message routing, no business logic
-2. **Agents own intelligence** - Extraction, identity resolution, arbitrage logic
+2. **Agents own intelligence** - Extraction, identity resolution, arbitrage
 3. **Adapters are simple** - Just translate source ↔ Cauce format
 4. **Free-form topics** - With recommended conventions for interoperability
 5. **Subscriptions can require approval** - User controls who sees their data
@@ -130,4 +133,5 @@ schemas/
 
 ## Contributing
 
-This project is in early development. Contributions, feedback, and discussions are welcome.
+This project is in early development. Contributions, feedback, and
+discussions are welcome.

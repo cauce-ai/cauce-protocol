@@ -29,30 +29,37 @@
 
 ### 1.1 Purpose
 
-The Cauce Protocol is an open standard for personal communication arbitrage. It provides a unified way to receive signals from diverse communication sources (email, SMS, messaging apps, voice, etc.) and enables AI agents to intelligently prioritize, filter, route, summarize, and respond to these signals based on individual preferences.
+The Cauce Protocol is an open standard for personal communication arbitrage.
+It provides a unified way to receive signals from diverse communication
+sources (email, SMS, messaging apps, voice, etc.) and enables AI agents to
+intelligently prioritize, filter, route, summarize, and respond to these
+signals based on individual preferences.
 
 ### 1.2 Design Principles
 
-1. **Transport Agnostic**: Support multiple transport mechanisms (WebSocket, SSE, polling, webhooks, long-polling)
-2. **Agent Agnostic**: The protocol defines communication patterns; agent implementation is out of scope
+1. **Transport Agnostic**: Support multiple transports (WebSocket, SSE, etc.)
+2. **Agent Agnostic**: Protocol defines communication; agent impl out of scope
 3. **Privacy First**: TLS mandatory, end-to-end encryption as optional extension
 4. **Extensible**: Free-form topics with recommended conventions
 5. **Interoperable**: Built on JSON-RPC 2.0, compatible with A2A protocol
 
 ### 1.3 Terminology
 
-| Term | Definition |
-|------|------------|
-| **Signal** | A unit of communication from any source (email, SMS, Slack message, etc.) |
-| **Adapter** | Component that connects to a communication source and publishes signals |
-| **Hub** | Central pub/sub message broker that routes signals and actions |
-| **Agent** | AI system that subscribes to signals and publishes actions (out of protocol scope) |
-| **Topic** | Named channel for pub/sub messaging |
-| **Subscription** | Registration to receive messages on specific topics |
+| Term             | Definition                                            |
+|------------------|-------------------------------------------------------|
+| **Signal**       | A unit of communication from any source               |
+| **Adapter**      | Connects to a communication source, publishes signals |
+| **Hub**          | Central pub/sub message broker                        |
+| **Agent**        | Subscribes to signals and publishes actions           |
+| **Topic**        | Named channel for pub/sub messaging                   |
+| **Subscription** | Registration to receive messages on specific topics   |
 
 ### 1.4 Notational Conventions
 
-The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this document are to be interpreted as described in [RFC 2119](https://www.rfc-editor.org/rfc/rfc2119).
+The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
+"SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this
+document are to be interpreted as described in
+[RFC 2119](https://www.rfc-editor.org/rfc/rfc2119).
 
 ---
 
@@ -60,48 +67,49 @@ The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "S
 
 ### 2.1 Overview
 
-Cauce follows a hybrid hub-and-spoke architecture with adapters translating source-specific protocols into a unified signal format.
+Cauce follows a hybrid hub-and-spoke architecture with adapters translating
+source-specific protocols into a unified signal format.
 
 ```
-┌─────────────────────────────────────────────────────────────────────────┐
-│                            CAUCE ECOSYSTEM                            │
-│                                                                         │
-│  ┌─────────┐     ┌─────────┐                                            │
-│  │  Email  │     │   SMS   │                                            │
-│  │ Source  │     │ Source  │    ... other sources                       │
-│  └────┬────┘     └────┬────┘                                            │
-│       │               │                                                 │
-│       ▼               ▼                                                 │
-│  ┌─────────┐     ┌─────────┐                                            │
-│  │  Email  │     │   SMS   │    ... other adapters                      │
-│  │ Adapter │     │ Adapter │                                            │
-│  └────┬────┘     └────┬────┘                                            │
-│       │               │                                                 │
-│       │   PUBLISH     │   PUBLISH                                       │
-│       ▼               ▼                                                 │
-│  ┌───────────────────────────────────────────────────────────────────┐  │
-│  │                         CAUCE HUB                               │  │
-│  │                      (Pub/Sub Broker)                             │  │
-│  │                                                                   │  │
-│  │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐                │  │
-│  │  │ Topic       │  │Subscription │  │   Queue     │                │  │
-│  │  │ Registry    │  │  Manager    │  │  Manager    │                │  │
-│  │  └─────────────┘  └─────────────┘  └─────────────┘                │  │
-│  │                                                                   │  │
-│  │  ┌─────────────┐  ┌─────────────┐                                 │  │
-│  │  │ A2A Gateway │  │  Security   │                                 │  │
-│  │  │             │  │   Layer     │                                 │  │
-│  │  └─────────────┘  └─────────────┘                                 │  │
-│  └───────────────────────────────────────────────────────────────────┘  │
-│       │               │               │                                 │
-│       │  SUBSCRIBE    │  SUBSCRIBE    │  A2A                            │
-│       ▼               ▼               ▼                                 │
-│  ┌─────────┐     ┌─────────┐     ┌─────────┐                            │
-│  │ Cauce │     │ Cauce │     │External │                            │
-│  │ Agent 1 │     │ Agent 2 │     │A2A Agent│                            │
-│  └─────────┘     └─────────┘     └─────────┘                            │
-│                                                                         │
-└─────────────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────┐
+│                            CAUCE ECOSYSTEM                          │
+│                                                                     │
+│  ┌─────────┐     ┌─────────┐                                        │
+│  │  Email  │     │   SMS   │                                        │
+│  │ Source  │     │ Source  │    ... other sources                   │
+│  └────┬────┘     └────┬────┘                                        │
+│       │               │                                             │
+│       ▼               ▼                                             │
+│  ┌─────────┐     ┌─────────┐                                        │
+│  │  Email  │     │   SMS   │    ... other adapters                  │
+│  │ Adapter │     │ Adapter │                                        │
+│  └────┬────┘     └────┬────┘                                        │
+│       │               │                                             │
+│       │   PUBLISH     │   PUBLISH                                   │
+│       ▼               ▼                                             │
+│  ┌───────────────────────────────────────────────────────────────┐  │
+│  │                         CAUCE HUB                             │  │
+│  │                      (Pub/Sub Broker)                         │  │
+│  │                                                               │  │
+│  │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐            │  │
+│  │  │ Topic       │  │Subscription │  │   Queue     │            │  │
+│  │  │ Registry    │  │  Manager    │  │  Manager    │            │  │
+│  │  └─────────────┘  └─────────────┘  └─────────────┘            │  │
+│  │                                                               │  │
+│  │  ┌─────────────┐  ┌─────────────┐                             │  │
+│  │  │ A2A Gateway │  │  Security   │                             │  │
+│  │  │             │  │   Layer     │                             │  │
+│  │  └─────────────┘  └─────────────┘                             │  │
+│  └───────────────────────────────────────────────────────────────┘  │
+│       │               │               │                             │
+│       │  SUBSCRIBE    │  SUBSCRIBE    │  A2A                        │
+│       ▼               ▼               ▼                             │
+│  ┌─────────┐     ┌─────────┐     ┌─────────┐                        │
+│  │ Cauce   │     │ Cauce   │     │External │                        │
+│  │ Agent 1 │     │ Agent 2 │     │A2A Agent│                        │
+│  └─────────┘     └─────────┘     └─────────┘                        │
+│                                                                     │
+└─────────────────────────────────────────────────────────────────────┘
 ```
 
 ### 2.2 Data Flow
@@ -140,10 +148,10 @@ An Adapter connects a communication source to the Cauce Hub.
 
 #### 3.1.1 Responsibilities
 
-| Responsibility | Description |
-|---------------|-------------|
-| Source Authentication | Authenticate with the source (e.g., OAuth for Gmail) - out of protocol scope |
-| Signal Translation | Convert source-native format to Cauce signal format |
+| Responsibility        | Description                                     |
+|-----------------------|-------------------------------------------------|
+| Source Authentication | Authenticate with source (e.g., OAuth) - OOS   |
+| Signal Translation    | Convert source-native format to Cauce signal   |
 | Publishing | Publish signals to Hub |
 | Subscribing | Subscribe to action topics for outbound messages |
 | Queuing | Queue signals locally if Hub is unavailable |
@@ -198,7 +206,7 @@ The Hub is the central pub/sub message broker.
 
 - Hub MUST implement pub/sub message routing
 - Hub MUST support at least one transport binding
-- Hub SHOULD support WebSocket and at least one HTTP-based transport (SSE, Polling, or Webhooks)
+- Hub SHOULD support WebSocket and at least one HTTP-based transport
 - Hub MUST support subscription management
 - Hub MUST enforce TLS for all connections
 - Hub MUST expose A2A-compatible endpoint
@@ -208,7 +216,8 @@ The Hub is the central pub/sub message broker.
 
 ### 3.3 Agent
 
-Agents subscribe to signals and publish actions. Agent implementation is **out of protocol scope**.
+Agents subscribe to signals and publish actions. Agent implementation is
+**out of protocol scope**.
 
 #### 3.3.1 Typical Agent Responsibilities (Informative)
 
@@ -315,7 +324,7 @@ Cauce uses JSON-RPC 2.0 as the wire protocol.
 
 | Method | Direction | Description |
 |--------|-----------|-------------|
-| `cauce.subscription.request` | Client → Hub | Request subscription (for user-approved) |
+| `cauce.subscription.request` | Client → Hub | Request subscription |
 | `cauce.subscription.approve` | User → Hub | Approve pending subscription |
 | `cauce.subscription.deny` | User → Hub | Deny pending subscription |
 | `cauce.subscription.list` | Client → Hub | List active subscriptions |
@@ -325,7 +334,7 @@ Cauce uses JSON-RPC 2.0 as the wire protocol.
 
 | Method | Direction | Description |
 |--------|-----------|-------------|
-| `cauce.schemas.list` | Client → Hub | List payload schemas supported by this Hub |
+| `cauce.schemas.list` | Client → Hub | List payload schemas supported by Hub |
 | `cauce.schemas.get` | Client → Hub | Get a specific schema definition |
 
 ---
@@ -358,12 +367,12 @@ Every signal MUST contain these fields:
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `id` | string | Globally unique signal identifier. Format: `sig_<timestamp>_<random>` |
+| `id` | string | Unique signal ID. Format: `sig_<timestamp>_<random>` |
 | `version` | string | Protocol version (semver) |
 | `timestamp` | string | ISO 8601 timestamp when signal was created at source |
 | `source` | object | Source information |
-| `source.type` | string | Source type identifier (e.g., "email", "sms", "slack") |
-| `source.adapter_id` | string | Identifier of the adapter that produced this signal |
+| `source.type` | string | Source type (e.g., "email", "sms", "slack") |
+| `source.adapter_id` | string | Adapter that produced this signal |
 | `source.native_id` | string | Original ID from the source system |
 | `topic` | string | Topic this signal is published to |
 | `payload` | object | Signal content (format depends on source type) |
@@ -376,13 +385,15 @@ Every signal MUST contain these fields:
 | `metadata.thread_id` | string | Conversation/thread identifier |
 | `metadata.in_reply_to` | string | Signal ID this is replying to |
 | `metadata.references` | array | Related signal IDs |
-| `metadata.priority` | string | Source-indicated priority ("low", "normal", "high", "urgent") |
+| `metadata.priority` | string | Priority ("low", "normal", "high", "urgent") |
 | `metadata.tags` | array | Source-provided tags/labels |
 | `encrypted` | object | E2E encryption information (see Section 8.3) |
 
 ### 5.3 Payload Structure
 
-The payload structure is source-type specific. **Payload schemas are defined by each Hub, not by this protocol.** Hubs expose their supported schemas via the `cauce.schemas.list` and `cauce.schemas.get` methods (see Section 4.2.4).
+The payload structure is source-type specific. **Payload schemas are defined
+by each Hub, not by this protocol.** Hubs expose their supported schemas via
+`cauce.schemas.list` and `cauce.schemas.get` methods (see Section 4.2.4).
 
 The examples below are illustrative and SHOULD follow these conventions:
 
@@ -555,13 +566,13 @@ Actions are signals published by agents to trigger outbound communications.
 Topics are UTF-8 strings with the following constraints:
 
 - MUST be between 1 and 255 characters
-- MUST contain only alphanumeric characters, dots (`.`), hyphens (`-`), and underscores (`_`)
+- MUST contain only alphanumeric, dots (`.`), hyphens (`-`), underscores (`_`)
 - MUST NOT start or end with a dot
 - MUST NOT contain consecutive dots
 
 #### 6.1.2 Recommended Topic Convention
 
-While topics are free-form, the following convention is RECOMMENDED for interoperability:
+While topics are free-form, the following convention is RECOMMENDED:
 
 ```
 <category>.<source/target>.<event/command>
@@ -595,10 +606,10 @@ system.subscription.approved
 
 Subscribers MAY use wildcards in topic subscriptions:
 
-| Wildcard | Matches | Example |
-|----------|---------|---------|
-| `*` | Single segment | `signal.*.received` matches `signal.email.received`, `signal.sms.received` |
-| `**` | Multiple segments | `signal.**` matches all signal topics |
+| Wildcard | Matches          | Example                                       |
+|----------|------------------|-----------------------------------------------|
+| `*`      | Single segment   | `signal.*.received` matches `signal.email.*`  |
+| `**`     | Multiple segments| `signal.**` matches all signal topics         |
 
 Publishers MUST NOT use wildcards in topic names.
 
@@ -759,11 +770,13 @@ Subscribers MUST acknowledge received signals to enable reliable delivery.
 
 ## 7. Transport Bindings
 
-Cauce supports five transport mechanisms. Implementations MUST support at least one. Hub implementations SHOULD support WebSocket and at least one HTTP-based transport for broad client compatibility.
+Cauce supports five transport mechanisms. Implementations MUST support at
+least one. Hub implementations SHOULD support WebSocket and at least one
+HTTP-based transport for broad client compatibility.
 
 ### 7.1 WebSocket
 
-Full-duplex, persistent connection suitable for real-time bidirectional communication.
+Full-duplex, persistent connection for real-time bidirectional communication.
 
 #### 7.1.1 Connection
 
@@ -812,10 +825,18 @@ All JSON-RPC messages are sent as WebSocket text frames.
 
 ```json
 // Client → Hub
-{"jsonrpc": "2.0", "method": "cauce.ping", "params": {"timestamp": 1704288600000}}
+{
+  "jsonrpc": "2.0",
+  "method": "cauce.ping",
+  "params": {"timestamp": 1704288600000}
+}
 
 // Hub → Client
-{"jsonrpc": "2.0", "method": "cauce.pong", "params": {"timestamp": 1704288600000}}
+{
+  "jsonrpc": "2.0",
+  "method": "cauce.pong",
+  "params": {"timestamp": 1704288600000}
+}
 ```
 
 ### 7.2 Server-Sent Events (SSE)
@@ -867,7 +888,8 @@ Content-Type: application/json
 
 ### 7.3 HTTP Polling
 
-Client periodically requests new signals. Suitable for simple clients or serverless environments.
+Client periodically requests new signals. Suitable for simple clients or
+serverless environments.
 
 #### 7.3.1 Poll Request
 
@@ -964,7 +986,8 @@ signature = HMAC-SHA256(secret, timestamp + "." + body)
 
 #### 7.5.4 Webhook Response
 
-Client MUST respond with 2xx status to acknowledge receipt. Any other status triggers redelivery.
+Client MUST respond with 2xx status to acknowledge receipt. Any other status
+triggers redelivery.
 
 ```json
 {
@@ -985,7 +1008,8 @@ Client MUST respond with 2xx status to acknowledge receipt. Any other status tri
 
 ### 8.2 Authentication
 
-The protocol does not mandate a specific authentication mechanism. Implementations MUST support at least one of:
+The protocol does not mandate a specific authentication mechanism.
+Implementations MUST support at least one of:
 
 | Method | Description |
 |--------|-------------|
@@ -1093,7 +1117,9 @@ Adapters MUST encrypt signals destined for E2E-enabled subscriptions.
 
 ## 9. A2A Integration
 
-Cauce Hub is primarily a Cauce server that **also speaks A2A** as an integration layer. This enables interoperability with the broader AI agent ecosystem without replacing Cauce's native protocol.
+Cauce Hub is primarily a Cauce server that **also speaks A2A** as an
+integration layer. This enables interoperability with the broader AI agent
+ecosystem without replacing Cauce's native protocol.
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
@@ -1120,8 +1146,8 @@ Cauce Hub is primarily a Cauce server that **also speaks A2A** as an integration
 
 The A2A integration allows:
 
-1. **Inbound**: External A2A agents send messages to the Hub, which become Cauce signals
-2. **Outbound**: Hub sends push notifications to external A2A agents subscribed to public topics
+1. **Inbound**: External A2A agents send messages to Hub → Cauce signals
+2. **Outbound**: Hub sends push notifications to subscribed external agents
 3. **Discovery**: External agents discover Hub capabilities via the Agent Card
 
 ### 9.2 A2A Endpoint
@@ -1153,9 +1179,9 @@ The Hub publishes an A2A Agent Card for discovery:
       "inputSchema": {
         "type": "object",
         "properties": {
-          "message": { "type": "string", "description": "Message content" },
-          "channel": { "type": "string", "enum": ["email", "sms", "any"], "default": "any" },
-          "subject": { "type": "string", "description": "Subject line (for email)" }
+          "message": { "type": "string" },
+          "channel": { "type": "string", "enum": ["email", "sms", "any"] },
+          "subject": { "type": "string" }
         },
         "required": ["message"]
       }
@@ -1168,7 +1194,7 @@ The Hub publishes an A2A Agent Card for discovery:
         "type": "object",
         "properties": {
           "title": { "type": "string" },
-          "proposed_times": { "type": "array", "items": { "type": "string", "format": "date-time" } },
+          "proposed_times": { "type": "array", "items": { "type": "string" } },
           "duration_minutes": { "type": "integer", "default": 30 },
           "description": { "type": "string" }
         },
@@ -1178,7 +1204,7 @@ The Hub publishes an A2A Agent Card for discovery:
     {
       "id": "subscribe_updates",
       "name": "Subscribe to Updates",
-      "description": "Subscribe to public topics (e.g., blog posts, announcements)",
+      "description": "Subscribe to public topics (e.g., blog posts)",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -1205,8 +1231,8 @@ The Hub publishes an A2A Agent Card for discovery:
       "inputSchema": {
         "type": "object",
         "properties": {
-          "schema_id": { "type": "string", "description": "Schema identifier (e.g., 'email', 'sms')" },
-          "version": { "type": "string", "description": "Specific version (defaults to latest)" }
+          "schema_id": { "type": "string" },
+          "version": { "type": "string" }
         },
         "required": ["schema_id"]
       }
@@ -1293,7 +1319,8 @@ External Agent                    Hub                         Your Agent
 
 ### 9.5 Outbound: Hub → External Agents
 
-External A2A agents can subscribe to **public topics** (e.g., blog posts, announcements) and receive push notifications.
+External A2A agents can subscribe to **public topics** (e.g., blog posts)
+and receive push notifications.
 
 #### 9.5.1 Subscription Flow
 
@@ -1408,7 +1435,10 @@ A2A errors are mapped to standard A2A error responses:
 
 ## 10. MCP Integration
 
-Cauce Hub can expose an MCP (Model Context Protocol) interface, enabling MCP-compatible AI agents to interact with the Hub without implementing the native Cauce protocol. This lowers the barrier to adoption since many AI agents already speak MCP.
+Cauce Hub can expose an MCP (Model Context Protocol) interface, enabling
+MCP-compatible AI agents to interact with the Hub without implementing the
+native Cauce protocol. This lowers the barrier to adoption since many AI
+agents already speak MCP.
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
@@ -1826,7 +1856,7 @@ MCP supports two patterns for signal delivery:
 
 #### 10.6.1 Streaming via SSE (Recommended)
 
-MCP's **Streamable HTTP transport** supports Server-Sent Events for real-time signal delivery:
+MCP's **Streamable HTTP transport** supports SSE for real-time delivery:
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
@@ -1851,12 +1881,12 @@ SSE stream format:
 
 ```
 event: signal
-id: sig_1704288600_abc123
-data: {"id":"sig_1704288600_abc123","topic":"signal.email.received","payload":{...}}
+id: sig_abc123
+data: {"id":"sig_abc123","topic":"signal.email.received","payload":{...}}
 
 event: signal
-id: sig_1704288700_def456
-data: {"id":"sig_1704288700_def456","topic":"signal.slack.message","payload":{...}}
+id: sig_def456
+data: {"id":"sig_def456","topic":"signal.slack.message","payload":{...}}
 ```
 
 Features:
@@ -2178,7 +2208,7 @@ Common content types for signal payloads:
 
 The following features are planned for future versions:
 
-1. **Multi-Hub Broadcasting**: Adapters publishing to multiple hubs for resilience
+1. **Multi-Hub Broadcasting**: Adapters publishing to multiple hubs
 2. **Hub Federation**: Hubs forwarding signals to each other
 3. **Signal Transformation**: Hub-side content transformation
 4. **Priority Queues**: Quality-of-service tiers for signal delivery
@@ -2195,7 +2225,7 @@ The following features are planned for future versions:
 - [RFC 2119 - Key Words](https://www.rfc-editor.org/rfc/rfc2119)
 - [RFC 8259 - JSON](https://www.rfc-editor.org/rfc/rfc8259)
 - [RFC 6455 - WebSocket](https://www.rfc-editor.org/rfc/rfc6455)
-- [Server-Sent Events - W3C](https://html.spec.whatwg.org/multipage/server-sent-events.html)
+- [SSE - W3C](https://html.spec.whatwg.org/multipage/server-sent-events.html)
 
 ---
 
@@ -2211,7 +2241,7 @@ The following features are planned for future versions:
 
 ### v1.0.0-draft (2026-01-05)
 
-- Relaxed transport requirements: Hub MUST support at least one transport, SHOULD support WebSocket + HTTP-based
+- Relaxed transport requirements: Hub MUST support at least one transport
 - Added project constitution defining 10 core principles
 
 ### v1.0.0-draft (2026-01-03)
