@@ -1,0 +1,101 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cauce-protocol.org/schemas/v1/methods/schemas.schema.json",
+  "title": "cauce.schemas",
+  "description": "Schema discovery methods for querying Hub-supported payload schemas",
+  "$defs": {
+    "listRequest": {
+      "type": "object",
+      "properties": {
+        "category": {
+          "type": "string",
+          "description": "Filter schemas by category (e.g., 'signal', 'action')"
+        }
+      },
+      "additionalProperties": false
+    },
+    "listResponse": {
+      "type": "object",
+      "required": ["schemas"],
+      "properties": {
+        "schemas": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/schemaSummary"
+          },
+          "description": "List of schemas supported by this Hub"
+        }
+      },
+      "additionalProperties": false
+    },
+    "getRequest": {
+      "type": "object",
+      "required": ["schema_id"],
+      "properties": {
+        "schema_id": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Schema identifier to retrieve (e.g., 'email', 'sms')"
+        },
+        "version": {
+          "type": "string",
+          "pattern": "^[0-9]+\\.[0-9]+$",
+          "description": "Specific version to retrieve (defaults to latest)"
+        }
+      },
+      "additionalProperties": false
+    },
+    "getResponse": {
+      "type": "object",
+      "required": ["schema_id", "version", "definition"],
+      "properties": {
+        "schema_id": {
+          "type": "string",
+          "description": "Schema identifier"
+        },
+        "version": {
+          "type": "string",
+          "pattern": "^[0-9]+\\.[0-9]+$",
+          "description": "Schema version"
+        },
+        "definition": {
+          "type": "object",
+          "description": "Full JSON Schema definition"
+        }
+      },
+      "additionalProperties": false
+    },
+    "schemaSummary": {
+      "type": "object",
+      "required": ["schema_id", "version"],
+      "properties": {
+        "schema_id": {
+          "type": "string",
+          "description": "Unique schema identifier (e.g., 'email', 'sms', 'slack')"
+        },
+        "version": {
+          "type": "string",
+          "pattern": "^[0-9]+\\.[0-9]+$",
+          "description": "Current schema version"
+        },
+        "title": {
+          "type": "string",
+          "description": "Human-readable schema name"
+        },
+        "description": {
+          "type": "string",
+          "description": "Schema description"
+        },
+        "categories": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["signal", "action"]
+          },
+          "description": "Whether this schema supports signal payloads, action payloads, or both"
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}
