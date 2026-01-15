@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cauce-protocol.org/schemas/v1/capability.schema.json",
+  "title": "Cauce Adapter Capability",
+  "description": "Definition of an operation that an adapter exposes for on-demand invocation",
+  "type": "object",
+  "required": ["name", "description", "input_schema", "output_schema", "idempotent", "readonly"],
+  "properties": {
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "pattern": "^[a-z][a-z0-9_]*$",
+      "description": "Unique capability name within this adapter (snake_case)"
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "description": "Human-readable description of what this capability does"
+    },
+    "input_schema": {
+      "type": "object",
+      "description": "JSON Schema defining the input parameters for this capability",
+      "properties": {
+        "type": {
+          "const": "object"
+        },
+        "properties": {
+          "type": "object"
+        },
+        "required": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": ["type", "properties"]
+    },
+    "output_schema": {
+      "type": "object",
+      "description": "JSON Schema defining the response format for this capability",
+      "properties": {
+        "type": {
+          "const": "object"
+        },
+        "properties": {
+          "type": "object"
+        }
+      },
+      "required": ["type", "properties"]
+    },
+    "idempotent": {
+      "type": "boolean",
+      "description": "If true, this capability is safe to retry on failure without side effects"
+    },
+    "readonly": {
+      "type": "boolean",
+      "description": "If true, this capability does not modify any state"
+    },
+    "timeout_hint_ms": {
+      "type": "integer",
+      "minimum": 100,
+      "maximum": 300000,
+      "description": "Expected execution time in milliseconds (hint for callers)"
+    }
+  },
+  "additionalProperties": false
+}

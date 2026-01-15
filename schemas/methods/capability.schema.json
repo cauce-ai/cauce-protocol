@@ -1,0 +1,76 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cauce-protocol.org/schemas/v1/methods/capability.schema.json",
+  "title": "cauce.capability.invoke",
+  "description": "Invoke an adapter capability (Hub to Adapter RPC)",
+  "$defs": {
+    "invoke_request": {
+      "type": "object",
+      "required": ["capability", "arguments"],
+      "properties": {
+        "capability": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Name of the capability to invoke"
+        },
+        "arguments": {
+          "type": "object",
+          "description": "Arguments to pass to the capability (must match input_schema)"
+        },
+        "timeout_ms": {
+          "type": "integer",
+          "minimum": 100,
+          "maximum": 300000,
+          "description": "Override timeout for this invocation"
+        }
+      },
+      "additionalProperties": false
+    },
+    "invoke_response": {
+      "description": "Response from capability invocation (schema defined by capability's output_schema)"
+    },
+    "list_request": {
+      "type": "object",
+      "properties": {
+        "adapter_name": {
+          "type": "string",
+          "description": "Filter capabilities by adapter name (optional)"
+        }
+      },
+      "additionalProperties": false
+    },
+    "list_response": {
+      "type": "object",
+      "required": ["capabilities"],
+      "properties": {
+        "capabilities": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/capability_info"
+          },
+          "description": "List of available capabilities"
+        }
+      },
+      "additionalProperties": false
+    },
+    "capability_info": {
+      "type": "object",
+      "required": ["adapter_name", "capability"],
+      "properties": {
+        "adapter_name": {
+          "type": "string",
+          "description": "Name of the adapter providing this capability"
+        },
+        "capability": {
+          "$ref": "https://cauce-protocol.org/schemas/v1/capability.schema.json",
+          "description": "Full capability definition"
+        },
+        "mcp_tool_name": {
+          "type": "string",
+          "description": "MCP tool name (adapter_name.capability_name)"
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

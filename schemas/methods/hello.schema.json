@@ -41,6 +41,13 @@
           },
           "description": "Capabilities this client supports"
         },
+        "adapter_capabilities": {
+          "type": "array",
+          "items": {
+            "$ref": "https://cauce-protocol.org/schemas/v1/capability.schema.json"
+          },
+          "description": "Operations this adapter exposes for on-demand invocation (adapters only)"
+        },
         "auth": {
           "$ref": "#/$defs/auth"
         }

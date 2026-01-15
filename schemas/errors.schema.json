@@ -96,6 +96,17 @@
             "UNSUPPORTED_TRANSPORT": { "const": -32014, "description": "Requested transport not supported" },
             "INVALID_TOPIC": { "const": -32015, "description": "Topic name is malformed" }
           }
+        },
+        "capability": {
+          "description": "Capability invocation errors",
+          "type": "object",
+          "properties": {
+            "CAPABILITY_NOT_FOUND": { "const": -32016, "description": "Requested capability does not exist" },
+            "ADAPTER_NOT_CONNECTED": { "const": -32017, "description": "Adapter for capability is not connected" },
+            "CAPABILITY_TIMEOUT": { "const": -32018, "description": "Adapter did not respond in time" },
+            "CAPABILITY_INVOCATION_FAILED": { "const": -32019, "description": "Adapter returned an error" },
+            "INVALID_CAPABILITY_ARGUMENTS": { "const": -32020, "description": "Arguments do not match input schema" }
+          }
         }
       }
     }
