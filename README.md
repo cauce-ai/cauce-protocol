@@ -32,15 +32,16 @@ all your communication channels through one interface.
 
 **Components:**
 
-| Component   | Role                                                 |
-|-------------|------------------------------------------------------|
-| **Adapter** | Connects to a communication source, publishes to Hub |
-| **Hub**     | Pub/sub message broker that routes signals/actions   |
-| **Agent**   | Subscribes to signals, decides what to do            |
+| Component   | Role                                                      |
+|-------------|-----------------------------------------------------------|
+| **Adapter** | Connects to a source, publishes signals, exposes capabilities |
+| **Hub**     | Pub/sub broker, routes signals/actions, exposes MCP tools |
+| **Agent**   | Subscribes to signals, invokes capabilities, decides actions |
 
 ## Key Features
 
 - **Pub/Sub Architecture**: Everything is topics and subscriptions
+- **Adapter Capabilities**: Adapters expose operations agents can invoke on-demand
 - **Transport Agnostic**: WebSocket, SSE, polling, long-polling, webhooks
 - **Privacy First**: TLS mandatory, end-to-end encryption optional
 - **A2A Compatible**: External agents can participate as first-class citizens
@@ -81,6 +82,30 @@ all your communication channels through one interface.
 }
 ```
 
+**Adapter capability (search emails):**
+
+Adapters can expose capabilities that agents invoke on-demand via MCP tools:
+
+```json
+// Agent calls MCP tool: gmail_personal.search
+{
+  "name": "gmail_personal.search",
+  "arguments": {
+    "query": "from:alice@example.com meeting",
+    "limit": 5
+  }
+}
+
+// Adapter returns results
+{
+  "results": [
+    { "id": "email_123", "subject": "Meeting tomorrow", "from": "alice@example.com" },
+    { "id": "email_089", "subject": "Meeting notes", "from": "alice@example.com" }
+  ],
+  "total": 2
+}
+```
+
 ## Documentation
 
 - [Full Protocol Specification](./cauce-protocol-spec.md)
@@ -92,16 +117,18 @@ all your communication channels through one interface.
 schemas/
 ├── signal.schema.json          # Core signal format
 ├── action.schema.json          # Outbound action format
+├── capability.schema.json      # Adapter capability definition
 ├── jsonrpc.schema.json         # JSON-RPC message envelope
 ├── errors.schema.json          # Error codes and formats
 ├── methods/
-│   ├── hello.schema.json       # Handshake
+│   ├── hello.schema.json       # Handshake (includes adapter_capabilities)
 │   ├── subscribe.schema.json   # Subscription management
 │   ├── unsubscribe.schema.json
 │   ├── publish.schema.json     # Publishing messages
 │   ├── ack.schema.json         # Acknowledgments
 │   ├── subscription.schema.json # Subscription lifecycle
-│   └── schemas.schema.json     # Schema discovery
+│   ├── schemas.schema.json     # Schema discovery
+│   └── capability.schema.json  # Capability invocation
 └── payloads/                   # Examples (Hub-defined, not normative)
     ├── email.schema.json       # Email-specific payloads
     ├── sms.schema.json         # SMS/MMS payloads

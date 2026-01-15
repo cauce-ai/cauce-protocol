@@ -1,8 +1,8 @@
 # Cauce Protocol Specification
 
-**Version:** 1.0.0-draft
+**Version:** 1.1.0-draft
 **Status:** Draft
-**Date:** 2026-01-06
+**Date:** 2026-01-15
 **License:** [Apache 2.0](./LICENSE)
 
 ---
@@ -187,6 +187,202 @@ When the Hub is unavailable:
 }
 ```
 
+#### 3.1.4 Capabilities
+
+Adapters MAY expose capabilities—operations that agents can invoke on-demand
+via the Hub. Unlike signals (push-based), capabilities follow a request/response
+pattern.
+
+##### 3.1.4.1 Capability Registration
+
+Adapters declare capabilities during the `cauce.hello` handshake. Capabilities
+are static for the lifetime of the connection.
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": "handshake_001",
+  "method": "cauce.hello",
+  "params": {
+    "protocol_version": "1.1",
+    "client_id": "gmail_personal",
+    "client_type": "adapter",
+    "capabilities": ["subscribe", "publish", "ack"],
+    "adapter_capabilities": [
+      {
+        "name": "list_folder",
+        "description": "List emails in a folder",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "folder": {
+              "type": "string",
+              "description": "Folder name (e.g., 'inbox', 'sent')"
+            },
+            "limit": {
+              "type": "integer",
+              "description": "Maximum emails to return",
+              "default": 50
+            }
+          },
+          "required": ["folder"]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "emails": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": { "type": "string" },
+                  "from": { "type": "string" },
+                  "subject": { "type": "string" },
+                  "timestamp": { "type": "string" }
+                }
+              }
+            },
+            "total": { "type": "integer" }
+          }
+        },
+        "idempotent": true,
+        "readonly": true,
+        "timeout_hint_ms": 5000
+      },
+      {
+        "name": "search",
+        "description": "Search emails by query",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "query": { "type": "string" },
+            "folder": { "type": "string" },
+            "limit": { "type": "integer", "default": 20 }
+          },
+          "required": ["query"]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "results": { "type": "array" },
+            "total": { "type": "integer" }
+          }
+        },
+        "idempotent": true,
+        "readonly": true,
+        "timeout_hint_ms": 10000
+      },
+      {
+        "name": "mark_read",
+        "description": "Mark an email as read",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "email_id": { "type": "string" }
+          },
+          "required": ["email_id"]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "success": { "type": "boolean" }
+          }
+        },
+        "idempotent": true,
+        "readonly": false,
+        "timeout_hint_ms": 2000
+      }
+    ]
+  }
+}
+```
+
+##### 3.1.4.2 Capability Schema
+
+Each capability MUST include:
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `name` | string | Yes | Unique name within this adapter |
+| `description` | string | Yes | Human-readable description |
+| `input_schema` | object | Yes | JSON Schema for input parameters |
+| `output_schema` | object | Yes | JSON Schema for response |
+| `idempotent` | boolean | Yes | Safe to retry on failure |
+| `readonly` | boolean | Yes | Does not modify state |
+| `timeout_hint_ms` | integer | No | Expected execution time in ms |
+
+##### 3.1.4.3 Capability Namespacing
+
+Capabilities are namespaced by adapter name. When exposed to agents (via MCP),
+capabilities are prefixed with the adapter's `client_id`:
+
+- Adapter `gmail_personal` with capability `list_folder`
+  → MCP tool `gmail_personal.list_folder`
+- Adapter `outlook_work` with capability `search`
+  → MCP tool `outlook_work.search`
+
+This ensures uniqueness when multiple adapters of the same type are connected.
+
+##### 3.1.4.4 Capability Invocation
+
+The Hub invokes adapter capabilities via `cauce.capability.invoke`:
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": "invoke_001",
+  "method": "cauce.capability.invoke",
+  "params": {
+    "capability": "list_folder",
+    "arguments": {
+      "folder": "inbox",
+      "limit": 10
+    }
+  }
+}
+```
+
+Adapter responds with result or error:
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": "invoke_001",
+  "result": {
+    "emails": [
+      {
+        "id": "email_123",
+        "from": "alice@example.com",
+        "subject": "Meeting tomorrow",
+        "timestamp": "2026-01-15T10:30:00Z"
+      }
+    ],
+    "total": 1
+  }
+}
+```
+
+##### 3.1.4.5 Error Handling
+
+If a capability invocation fails, the adapter returns a JSON-RPC error:
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": "invoke_001",
+  "error": {
+    "code": -32020,
+    "message": "Folder not found",
+    "data": {
+      "folder": "nonexistent"
+    }
+  }
+}
+```
+
+The Hub forwards errors to the agent without retry. Agents are responsible for
+retry logic and may use the `idempotent` flag to determine if retrying is safe.
+
 ### 3.2 Hub
 
 The Hub is the central pub/sub message broker.
@@ -336,6 +532,13 @@ Cauce uses JSON-RPC 2.0 as the wire protocol.
 |--------|-----------|-------------|
 | `cauce.schemas.list` | Client → Hub | List payload schemas supported by Hub |
 | `cauce.schemas.get` | Client → Hub | Get a specific schema definition |
+
+#### 4.2.5 Capability Methods
+
+| Method | Direction | Description |
+|--------|-----------|-------------|
+| `cauce.capability.invoke` | Hub → Adapter | Invoke an adapter capability |
+| `cauce.capabilities.list` | Client → Hub | List available adapter capabilities |
 
 ---
 
@@ -1783,6 +1986,118 @@ Poll for new signals (alternative to resource):
 }
 ```
 
+#### 10.4.6 Adapter Capability Tools
+
+In addition to the core Hub tools above, the Hub dynamically exposes adapter
+capabilities as MCP tools. When an adapter connects and registers capabilities
+(see Section 3.1.4), the Hub creates corresponding MCP tools.
+
+**Naming Convention:**
+
+Tools are namespaced by adapter name: `{adapter_name}.{capability_name}`
+
+**Example: Email Adapter Tools**
+
+If adapter `gmail_personal` registers capabilities `list_folder`, `search`,
+and `mark_read`, the Hub exposes these MCP tools:
+
+```json
+[
+  {
+    "name": "gmail_personal.list_folder",
+    "description": "List emails in a folder",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "folder": { "type": "string" },
+        "limit": { "type": "integer", "default": 50 }
+      },
+      "required": ["folder"]
+    }
+  },
+  {
+    "name": "gmail_personal.search",
+    "description": "Search emails by query",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "query": { "type": "string" },
+        "folder": { "type": "string" },
+        "limit": { "type": "integer", "default": 20 }
+      },
+      "required": ["query"]
+    }
+  },
+  {
+    "name": "gmail_personal.mark_read",
+    "description": "Mark an email as read",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "email_id": { "type": "string" }
+      },
+      "required": ["email_id"]
+    }
+  }
+]
+```
+
+**Invocation Flow:**
+
+1. Agent calls MCP tool `gmail_personal.list_folder`
+2. Hub parses adapter name from tool name
+3. Hub sends `cauce.capability.invoke` to adapter
+4. Adapter executes and returns result
+5. Hub returns result to agent
+
+**Example Call:**
+
+```json
+{
+  "name": "gmail_personal.list_folder",
+  "arguments": {
+    "folder": "inbox",
+    "limit": 10
+  }
+}
+```
+
+**Response:**
+
+```json
+{
+  "emails": [
+    {
+      "id": "email_123",
+      "from": "alice@example.com",
+      "subject": "Meeting tomorrow",
+      "timestamp": "2026-01-15T10:30:00Z"
+    }
+  ],
+  "total": 1
+}
+```
+
+**Error Response:**
+
+If the adapter returns an error, it is forwarded to the agent:
+
+```json
+{
+  "error": {
+    "code": -32020,
+    "message": "Folder not found",
+    "data": { "folder": "nonexistent" }
+  }
+}
+```
+
+**Tool Availability:**
+
+Adapter capability tools are only available while the adapter is connected.
+When an adapter disconnects, its tools are removed from the MCP tool list.
+Agents SHOULD handle tool-not-found errors gracefully.
+
 ### 10.5 MCP Prompts
 
 Prompts provide reusable templates for common actions.
@@ -2036,6 +2351,16 @@ while True:
 | -32014 | Unsupported transport | Requested transport not supported |
 | -32015 | Invalid topic | Topic name is malformed |
 
+#### 11.2.3 Capability Errors
+
+| Code | Message | Description |
+|------|---------|-------------|
+| -32016 | Capability not found | Requested capability does not exist |
+| -32017 | Adapter not connected | Adapter for capability is not connected |
+| -32018 | Capability timeout | Adapter did not respond in time |
+| -32019 | Capability invocation failed | Adapter returned an error |
+| -32020 | Invalid capability arguments | Arguments do not match input schema |
+
 ### 11.3 Retry Semantics
 
 #### 11.3.1 Publisher Retry
@@ -2230,6 +2555,16 @@ The following features are planned for future versions:
 ---
 
 ## Changelog
+
+### v1.1.0-draft (2026-01-15)
+
+- Added adapter capabilities: adapters can expose operations for agents to invoke
+- Capabilities registered during `cauce.hello` handshake via `adapter_capabilities`
+- Added `cauce.capability.invoke` method for Hub→Adapter RPC
+- Added `cauce.capabilities.list` method for agents to discover capabilities
+- Capabilities exposed as MCP tools with `{adapter_name}.{capability_name}` naming
+- Added capability error codes (-32016 through -32020)
+- Capabilities are adapter-namespaced and static for connection lifetime
 
 ### v1.0.0-draft (2026-01-06)
 
