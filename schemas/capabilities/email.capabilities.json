@@ -1,0 +1,445 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cauce-protocol.org/schemas/v1/capabilities/email.capabilities.json",
+  "title": "Example Email Adapter Capabilities",
+  "description": "Example capabilities for an email adapter (not normative)",
+  "type": "array",
+  "items": {
+    "$ref": "https://cauce-protocol.org/schemas/v1/capability.schema.json"
+  },
+  "examples": [
+    [
+      {
+        "name": "list_folders",
+        "description": "List all available email folders/labels",
+        "input_schema": {
+          "type": "object",
+          "properties": {}
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "folders": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": { "type": "string" },
+                  "name": { "type": "string" },
+                  "unread_count": { "type": "integer" },
+                  "total_count": { "type": "integer" }
+                }
+              }
+            }
+          }
+        },
+        "idempotent": true,
+        "readonly": true,
+        "timeout_hint_ms": 3000
+      },
+      {
+        "name": "list_emails",
+        "description": "List emails in a folder with optional filtering",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "folder": {
+              "type": "string",
+              "description": "Folder ID or name (e.g., 'inbox', 'sent', 'drafts')"
+            },
+            "limit": {
+              "type": "integer",
+              "description": "Maximum emails to return",
+              "default": 20
+            },
+            "offset": {
+              "type": "integer",
+              "description": "Number of emails to skip",
+              "default": 0
+            },
+            "unread_only": {
+              "type": "boolean",
+              "description": "Only return unread emails",
+              "default": false
+            }
+          },
+          "required": ["folder"]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "emails": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": { "type": "string" },
+                  "from": { "type": "string" },
+                  "to": { "type": "array", "items": { "type": "string" } },
+                  "subject": { "type": "string" },
+                  "snippet": { "type": "string" },
+                  "timestamp": { "type": "string", "format": "date-time" },
+                  "is_read": { "type": "boolean" },
+                  "has_attachments": { "type": "boolean" }
+                }
+              }
+            },
+            "total": { "type": "integer" },
+            "has_more": { "type": "boolean" }
+          }
+        },
+        "idempotent": true,
+        "readonly": true,
+        "timeout_hint_ms": 5000
+      },
+      {
+        "name": "get_email",
+        "description": "Get full email content by ID",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "email_id": {
+              "type": "string",
+              "description": "Email ID to retrieve"
+            },
+            "include_attachments": {
+              "type": "boolean",
+              "description": "Include attachment metadata",
+              "default": true
+            }
+          },
+          "required": ["email_id"]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "id": { "type": "string" },
+            "from": { "type": "string" },
+            "to": { "type": "array", "items": { "type": "string" } },
+            "cc": { "type": "array", "items": { "type": "string" } },
+            "subject": { "type": "string" },
+            "body_text": { "type": "string" },
+            "body_html": { "type": "string" },
+            "timestamp": { "type": "string", "format": "date-time" },
+            "is_read": { "type": "boolean" },
+            "labels": { "type": "array", "items": { "type": "string" } },
+            "attachments": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": { "type": "string" },
+                  "filename": { "type": "string" },
+                  "content_type": { "type": "string" },
+                  "size_bytes": { "type": "integer" }
+                }
+              }
+            }
+          }
+        },
+        "idempotent": true,
+        "readonly": true,
+        "timeout_hint_ms": 3000
+      },
+      {
+        "name": "search",
+        "description": "Search emails by query string",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "query": {
+              "type": "string",
+              "description": "Search query (supports from:, to:, subject:, has:attachment, etc.)"
+            },
+            "folder": {
+              "type": "string",
+              "description": "Limit search to specific folder (optional)"
+            },
+            "limit": {
+              "type": "integer",
+              "description": "Maximum results to return",
+              "default": 20
+            }
+          },
+          "required": ["query"]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "results": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": { "type": "string" },
+                  "from": { "type": "string" },
+                  "subject": { "type": "string" },
+                  "snippet": { "type": "string" },
+                  "timestamp": { "type": "string", "format": "date-time" },
+                  "folder": { "type": "string" }
+                }
+              }
+            },
+            "total": { "type": "integer" }
+          }
+        },
+        "idempotent": true,
+        "readonly": true,
+        "timeout_hint_ms": 10000
+      },
+      {
+        "name": "mark_read",
+        "description": "Mark an email as read",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "email_id": {
+              "type": "string",
+              "description": "Email ID to mark as read"
+            }
+          },
+          "required": ["email_id"]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "success": { "type": "boolean" }
+          }
+        },
+        "idempotent": true,
+        "readonly": false,
+        "timeout_hint_ms": 2000
+      },
+      {
+        "name": "mark_unread",
+        "description": "Mark an email as unread",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "email_id": {
+              "type": "string",
+              "description": "Email ID to mark as unread"
+            }
+          },
+          "required": ["email_id"]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "success": { "type": "boolean" }
+          }
+        },
+        "idempotent": true,
+        "readonly": false,
+        "timeout_hint_ms": 2000
+      },
+      {
+        "name": "move_to_folder",
+        "description": "Move an email to a different folder",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "email_id": {
+              "type": "string",
+              "description": "Email ID to move"
+            },
+            "folder": {
+              "type": "string",
+              "description": "Target folder ID or name"
+            }
+          },
+          "required": ["email_id", "folder"]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "success": { "type": "boolean" }
+          }
+        },
+        "idempotent": true,
+        "readonly": false,
+        "timeout_hint_ms": 3000
+      },
+      {
+        "name": "archive",
+        "description": "Archive an email (remove from inbox)",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "email_id": {
+              "type": "string",
+              "description": "Email ID to archive"
+            }
+          },
+          "required": ["email_id"]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "success": { "type": "boolean" }
+          }
+        },
+        "idempotent": true,
+        "readonly": false,
+        "timeout_hint_ms": 2000
+      },
+      {
+        "name": "trash",
+        "description": "Move an email to trash",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "email_id": {
+              "type": "string",
+              "description": "Email ID to trash"
+            }
+          },
+          "required": ["email_id"]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "success": { "type": "boolean" }
+          }
+        },
+        "idempotent": true,
+        "readonly": false,
+        "timeout_hint_ms": 2000
+      },
+      {
+        "name": "add_label",
+        "description": "Add a label/tag to an email",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "email_id": {
+              "type": "string",
+              "description": "Email ID"
+            },
+            "label": {
+              "type": "string",
+              "description": "Label to add"
+            }
+          },
+          "required": ["email_id", "label"]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "success": { "type": "boolean" }
+          }
+        },
+        "idempotent": true,
+        "readonly": false,
+        "timeout_hint_ms": 2000
+      },
+      {
+        "name": "remove_label",
+        "description": "Remove a label/tag from an email",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "email_id": {
+              "type": "string",
+              "description": "Email ID"
+            },
+            "label": {
+              "type": "string",
+              "description": "Label to remove"
+            }
+          },
+          "required": ["email_id", "label"]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "success": { "type": "boolean" }
+          }
+        },
+        "idempotent": true,
+        "readonly": false,
+        "timeout_hint_ms": 2000
+      },
+      {
+        "name": "get_attachment",
+        "description": "Download an email attachment",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "email_id": {
+              "type": "string",
+              "description": "Email ID"
+            },
+            "attachment_id": {
+              "type": "string",
+              "description": "Attachment ID"
+            }
+          },
+          "required": ["email_id", "attachment_id"]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "filename": { "type": "string" },
+            "content_type": { "type": "string" },
+            "size_bytes": { "type": "integer" },
+            "data": {
+              "type": "string",
+              "contentEncoding": "base64",
+              "description": "Base64-encoded attachment content"
+            }
+          }
+        },
+        "idempotent": true,
+        "readonly": true,
+        "timeout_hint_ms": 30000
+      },
+      {
+        "name": "create_draft",
+        "description": "Create a draft email",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "to": {
+              "type": "array",
+              "items": { "type": "string", "format": "email" },
+              "description": "Recipient addresses"
+            },
+            "cc": {
+              "type": "array",
+              "items": { "type": "string", "format": "email" },
+              "description": "CC addresses"
+            },
+            "subject": {
+              "type": "string",
+              "description": "Email subject"
+            },
+            "body_text": {
+              "type": "string",
+              "description": "Plain text body"
+            },
+            "body_html": {
+              "type": "string",
+              "description": "HTML body"
+            },
+            "in_reply_to": {
+              "type": "string",
+              "description": "Email ID this is a reply to (optional)"
+            }
+          },
+          "required": ["to", "subject"]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "draft_id": { "type": "string" },
+            "success": { "type": "boolean" }
+          }
+        },
+        "idempotent": false,
+        "readonly": false,
+        "timeout_hint_ms": 5000
+      }
+    ]
+  ]
+}
