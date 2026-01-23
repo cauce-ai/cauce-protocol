@@ -1,0 +1,571 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cauce-protocol.org/schemas/v1/capabilities/slack.capabilities.json",
+  "title": "Example Slack Adapter Capabilities",
+  "description": "Example capabilities for a Slack adapter (not normative)",
+  "type": "array",
+  "items": {
+    "$ref": "https://cauce-protocol.org/schemas/v1/capability.schema.json"
+  },
+  "examples": [
+    [
+      {
+        "name": "list_channels",
+        "description": "List available channels the user can access",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "include_private": {
+              "type": "boolean",
+              "description": "Include private channels",
+              "default": true
+            },
+            "include_archived": {
+              "type": "boolean",
+              "description": "Include archived channels",
+              "default": false
+            }
+          }
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "channels": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": { "type": "string" },
+                  "name": { "type": "string" },
+                  "is_private": { "type": "boolean" },
+                  "is_archived": { "type": "boolean" },
+                  "member_count": { "type": "integer" },
+                  "topic": { "type": "string" },
+                  "purpose": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "idempotent": true,
+        "readonly": true,
+        "timeout_hint_ms": 5000
+      },
+      {
+        "name": "list_dms",
+        "description": "List direct message conversations",
+        "input_schema": {
+          "type": "object",
+          "properties": {}
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "conversations": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": { "type": "string" },
+                  "user_id": { "type": "string" },
+                  "user_name": { "type": "string" },
+                  "user_display_name": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "idempotent": true,
+        "readonly": true,
+        "timeout_hint_ms": 3000
+      },
+      {
+        "name": "get_channel_history",
+        "description": "Get message history from a channel or DM",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "channel_id": {
+              "type": "string",
+              "description": "Channel or conversation ID"
+            },
+            "limit": {
+              "type": "integer",
+              "description": "Maximum messages to return",
+              "default": 50
+            },
+            "oldest": {
+              "type": "string",
+              "description": "Only messages after this timestamp"
+            },
+            "latest": {
+              "type": "string",
+              "description": "Only messages before this timestamp"
+            }
+          },
+          "required": ["channel_id"]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "messages": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "ts": { "type": "string" },
+                  "user_id": { "type": "string" },
+                  "user_name": { "type": "string" },
+                  "text": { "type": "string" },
+                  "thread_ts": { "type": "string" },
+                  "reply_count": { "type": "integer" },
+                  "reactions": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "name": { "type": "string" },
+                        "count": { "type": "integer" }
+                      }
+                    }
+                  },
+                  "attachments": { "type": "array" },
+                  "files": { "type": "array" }
+                }
+              }
+            },
+            "has_more": { "type": "boolean" }
+          }
+        },
+        "idempotent": true,
+        "readonly": true,
+        "timeout_hint_ms": 5000
+      },
+      {
+        "name": "get_thread",
+        "description": "Get all replies in a message thread",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "channel_id": {
+              "type": "string",
+              "description": "Channel ID"
+            },
+            "thread_ts": {
+              "type": "string",
+              "description": "Timestamp of the parent message"
+            },
+            "limit": {
+              "type": "integer",
+              "description": "Maximum replies to return",
+              "default": 100
+            }
+          },
+          "required": ["channel_id", "thread_ts"]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "messages": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "ts": { "type": "string" },
+                  "user_id": { "type": "string" },
+                  "user_name": { "type": "string" },
+                  "text": { "type": "string" }
+                }
+              }
+            },
+            "has_more": { "type": "boolean" }
+          }
+        },
+        "idempotent": true,
+        "readonly": true,
+        "timeout_hint_ms": 5000
+      },
+      {
+        "name": "search_messages",
+        "description": "Search for messages across channels",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "query": {
+              "type": "string",
+              "description": "Search query (supports from:, in:, has:, before:, after:)"
+            },
+            "limit": {
+              "type": "integer",
+              "description": "Maximum results to return",
+              "default": 20
+            },
+            "sort": {
+              "type": "string",
+              "enum": ["score", "timestamp"],
+              "description": "Sort order",
+              "default": "score"
+            }
+          },
+          "required": ["query"]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "results": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "ts": { "type": "string" },
+                  "channel_id": { "type": "string" },
+                  "channel_name": { "type": "string" },
+                  "user_id": { "type": "string" },
+                  "user_name": { "type": "string" },
+                  "text": { "type": "string" },
+                  "permalink": { "type": "string" }
+                }
+              }
+            },
+            "total": { "type": "integer" }
+          }
+        },
+        "idempotent": true,
+        "readonly": true,
+        "timeout_hint_ms": 10000
+      },
+      {
+        "name": "get_user_info",
+        "description": "Get information about a user",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "user_id": {
+              "type": "string",
+              "description": "User ID"
+            }
+          },
+          "required": ["user_id"]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "id": { "type": "string" },
+            "name": { "type": "string" },
+            "real_name": { "type": "string" },
+            "display_name": { "type": "string" },
+            "email": { "type": "string" },
+            "title": { "type": "string" },
+            "status_text": { "type": "string" },
+            "status_emoji": { "type": "string" },
+            "timezone": { "type": "string" },
+            "is_bot": { "type": "boolean" },
+            "avatar_url": { "type": "string" }
+          }
+        },
+        "idempotent": true,
+        "readonly": true,
+        "timeout_hint_ms": 2000
+      },
+      {
+        "name": "list_users",
+        "description": "List all users in the workspace",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "include_bots": {
+              "type": "boolean",
+              "description": "Include bot users",
+              "default": false
+            }
+          }
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "users": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": { "type": "string" },
+                  "name": { "type": "string" },
+                  "real_name": { "type": "string" },
+                  "display_name": { "type": "string" },
+                  "is_bot": { "type": "boolean" }
+                }
+              }
+            }
+          }
+        },
+        "idempotent": true,
+        "readonly": true,
+        "timeout_hint_ms": 10000
+      },
+      {
+        "name": "get_permalink",
+        "description": "Get a permanent link to a message",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "channel_id": {
+              "type": "string",
+              "description": "Channel ID"
+            },
+            "message_ts": {
+              "type": "string",
+              "description": "Message timestamp"
+            }
+          },
+          "required": ["channel_id", "message_ts"]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "permalink": { "type": "string" }
+          }
+        },
+        "idempotent": true,
+        "readonly": true,
+        "timeout_hint_ms": 2000
+      },
+      {
+        "name": "add_reaction",
+        "description": "Add an emoji reaction to a message",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "channel_id": {
+              "type": "string",
+              "description": "Channel ID"
+            },
+            "message_ts": {
+              "type": "string",
+              "description": "Message timestamp"
+            },
+            "emoji": {
+              "type": "string",
+              "description": "Emoji name without colons (e.g., 'thumbsup')"
+            }
+          },
+          "required": ["channel_id", "message_ts", "emoji"]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "success": { "type": "boolean" }
+          }
+        },
+        "idempotent": true,
+        "readonly": false,
+        "timeout_hint_ms": 2000
+      },
+      {
+        "name": "remove_reaction",
+        "description": "Remove an emoji reaction from a message",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "channel_id": {
+              "type": "string",
+              "description": "Channel ID"
+            },
+            "message_ts": {
+              "type": "string",
+              "description": "Message timestamp"
+            },
+            "emoji": {
+              "type": "string",
+              "description": "Emoji name without colons"
+            }
+          },
+          "required": ["channel_id", "message_ts", "emoji"]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "success": { "type": "boolean" }
+          }
+        },
+        "idempotent": true,
+        "readonly": false,
+        "timeout_hint_ms": 2000
+      },
+      {
+        "name": "set_channel_topic",
+        "description": "Set the topic of a channel",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "channel_id": {
+              "type": "string",
+              "description": "Channel ID"
+            },
+            "topic": {
+              "type": "string",
+              "description": "New channel topic"
+            }
+          },
+          "required": ["channel_id", "topic"]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "success": { "type": "boolean" },
+            "topic": { "type": "string" }
+          }
+        },
+        "idempotent": true,
+        "readonly": false,
+        "timeout_hint_ms": 2000
+      },
+      {
+        "name": "mark_read",
+        "description": "Mark a channel as read up to a specific message",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "channel_id": {
+              "type": "string",
+              "description": "Channel ID"
+            },
+            "message_ts": {
+              "type": "string",
+              "description": "Timestamp to mark as read up to"
+            }
+          },
+          "required": ["channel_id", "message_ts"]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "success": { "type": "boolean" }
+          }
+        },
+        "idempotent": true,
+        "readonly": false,
+        "timeout_hint_ms": 2000
+      },
+      {
+        "name": "get_unread_count",
+        "description": "Get unread message counts for channels",
+        "input_schema": {
+          "type": "object",
+          "properties": {}
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "channels": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "channel_id": { "type": "string" },
+                  "channel_name": { "type": "string" },
+                  "unread_count": { "type": "integer" },
+                  "mention_count": { "type": "integer" }
+                }
+              }
+            },
+            "total_unread": { "type": "integer" },
+            "total_mentions": { "type": "integer" }
+          }
+        },
+        "idempotent": true,
+        "readonly": true,
+        "timeout_hint_ms": 5000
+      },
+      {
+        "name": "pin_message",
+        "description": "Pin a message to a channel",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "channel_id": {
+              "type": "string",
+              "description": "Channel ID"
+            },
+            "message_ts": {
+              "type": "string",
+              "description": "Message timestamp"
+            }
+          },
+          "required": ["channel_id", "message_ts"]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "success": { "type": "boolean" }
+          }
+        },
+        "idempotent": true,
+        "readonly": false,
+        "timeout_hint_ms": 2000
+      },
+      {
+        "name": "unpin_message",
+        "description": "Unpin a message from a channel",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "channel_id": {
+              "type": "string",
+              "description": "Channel ID"
+            },
+            "message_ts": {
+              "type": "string",
+              "description": "Message timestamp"
+            }
+          },
+          "required": ["channel_id", "message_ts"]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "success": { "type": "boolean" }
+          }
+        },
+        "idempotent": true,
+        "readonly": false,
+        "timeout_hint_ms": 2000
+      },
+      {
+        "name": "get_pinned_messages",
+        "description": "Get all pinned messages in a channel",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "channel_id": {
+              "type": "string",
+              "description": "Channel ID"
+            }
+          },
+          "required": ["channel_id"]
+        },
+        "output_schema": {
+          "type": "object",
+          "properties": {
+            "messages": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "ts": { "type": "string" },
+                  "user_id": { "type": "string" },
+                  "user_name": { "type": "string" },
+                  "text": { "type": "string" },
+                  "pinned_by": { "type": "string" },
+                  "pinned_at": { "type": "string", "format": "date-time" }
+                }
+              }
+            }
+          }
+        },
+        "idempotent": true,
+        "readonly": true,
+        "timeout_hint_ms": 3000
+      }
+    ]
+  ]
+}

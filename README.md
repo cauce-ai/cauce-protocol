@@ -130,7 +130,8 @@ schemas/
 │   ├── schemas.schema.json     # Schema discovery
 │   └── capability.schema.json  # Capability invocation
 ├── capabilities/               # Examples (Adapter-defined, not normative)
-│   └── email.capabilities.json # Email adapter capabilities
+│   ├── email.capabilities.json # Email adapter capabilities
+│   └── slack.capabilities.json # Slack adapter capabilities
 └── payloads/                   # Examples (Hub-defined, not normative)
     ├── email.schema.json       # Email-specific payloads
     ├── sms.schema.json         # SMS/MMS payloads

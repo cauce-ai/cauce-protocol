@@ -21,6 +21,7 @@ the `adapter_capabilities` field. Capabilities are:
 | File | Description |
 |------|-------------|
 | `email.capabilities.json` | Email adapter: folders, search, read/unread, labels, attachments |
+| `slack.capabilities.json` | Slack adapter: channels, messages, threads, reactions, pins |
 
 ## Using These Examples
 
